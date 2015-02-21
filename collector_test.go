@@ -8,9 +8,9 @@ import (
 
 func TestCollectFromCmd(t *testing.T) {
 
-	c, _ := NewCollector(".")
+	c, _ := newCollector(".")
 	r, _ := c.collectFromCmd(os.Getenv("GOPATH") + "/src/github.com/Songmu/swimmy/test/foo.go")
-	fmt.Printf("%+v", r)
+	fmt.Printf("%+v\n", r)
 
 	if r["test.foo.go"] != 1 {
 		t.Errorf("test.foo.go is not collected")
@@ -19,4 +19,10 @@ func TestCollectFromCmd(t *testing.T) {
 	if r["test.foo.go.sample"] != 15.5 {
 		t.Errorf("test.foo.go.cample is not collected")
 	}
+}
+
+func TestCollectValues(t *testing.T) {
+	c, _ := newCollector(".")
+
+	c.collectValues()
 }

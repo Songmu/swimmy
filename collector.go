@@ -2,7 +2,9 @@ package swimmy
 
 import (
 	"bytes"
+	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -19,11 +21,42 @@ type collector struct {
 	dir string
 }
 
-// func (c *collector) collectValues() ([]metricValue, error) {
-//
-// }
+func (c *collector) collectValues() ([]metricValue, error) {
+	var result []metricValue
 
-func NewCollector(dir string) (*collector, error) {
+	ch := c.gatherExecutable()
+
+	for path := range ch {
+		fmt.Println(path)
+	}
+
+	return result, nil
+}
+
+func (c *collector) gatherExecutable() <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		filepath.Walk(c.dir, func(path string, info os.FileInfo, err error) error {
+			if info.IsDir() {
+				if (info.Name())[0] == '.' {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			if (info.Mode() & 0111) != 0 {
+				ch <- path
+			}
+			return nil
+		})
+		close(ch)
+	}()
+
+	return ch
+}
+
+func newCollector(dir string) (*collector, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
 		log.Printf("Failed to create collector \"%s\"", dir)
