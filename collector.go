@@ -2,18 +2,19 @@ package swimmy
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
 type metricValue struct {
+	time  int64
 	name  string
-	time  uint64
 	value float64
 }
 
@@ -25,11 +26,35 @@ func (c *collector) collectValues() ([]metricValue, error) {
 	var result []metricValue
 
 	ch := c.gatherExecutable()
+	resultChan := make(chan map[string]float64)
+	go func() {
+		var wg sync.WaitGroup
+		for path := range ch {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				v, err := c.collectFromCmd(path)
+				if err != nil {
+					log.Printf("error")
+					return
+				}
+				resultChan <- v
+			}()
+		}
+		wg.Wait()
+		close(resultChan)
+	}()
 
-	for path := range ch {
-		fmt.Println(path)
+	time := time.Now().Unix()
+	for r := range resultChan {
+		for k, v := range r {
+			result = append(result, metricValue{
+				time:  time,
+				name:  k,
+				value: v,
+			})
+		}
 	}
-
 	return result, nil
 }
 
