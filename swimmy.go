@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-type agent struct {
+type Swimmy struct {
 	dir      string
 	procs    int
 	interval uint
 }
 
-func NewAgent(dir string, interval uint) *agent {
+func NewSwimmy(dir string, interval uint) *Swimmy {
 	if interval == 0 {
 		interval = 1
 	}
@@ -33,19 +33,19 @@ func NewAgent(dir string, interval uint) *agent {
 		os.Exit(1)
 	}
 
-	return &agent{
+	return &Swimmy{
 		dir:      absDir,
 		interval: interval,
 		procs:    1,
 	}
 }
 
-func (a *agent) collectors() []*collector {
+func (s *Swimmy) collectors() []*collector {
 	collectors := []*collector{}
 
-	fileInformations, err := ioutil.ReadDir(a.dir)
+	fileInformations, err := ioutil.ReadDir(s.dir)
 	if err != nil {
-		fmt.Printf("Can't read Directory : [%s]. %s\n", a.dir, err)
+		fmt.Printf("Can't read Directory : [%s]. %s\n", s.dir, err)
 		return collectors
 	}
 
@@ -55,7 +55,7 @@ func (a *agent) collectors() []*collector {
 			continue
 		}
 
-		c := newCollector(filepath.Join(a.dir, name))
+		c := newCollector(filepath.Join(s.dir, name))
 		collectors = append(collectors, c)
 	}
 	return collectors
@@ -66,7 +66,7 @@ type postValue struct {
 	values  []metricValue
 }
 
-func (a *agent) Watch() <-chan []postValue {
+func (s *Swimmy) watch() <-chan []postValue {
 	ch := make(chan []postValue)
 	timer := make(chan time.Time)
 
@@ -74,14 +74,14 @@ func (a *agent) Watch() <-chan []postValue {
 		next := time.Now()
 		for {
 			timer <- <-time.After(next.Sub(time.Now()))
-			next = next.Add(time.Duration(a.interval) * time.Minute)
+			next = next.Add(time.Duration(s.interval) * time.Minute)
 		}
 	}()
 
 	go func() {
 		for _ = range timer {
 			go func() {
-				ch <- a.collectValues()
+				ch <- s.collectValues()
 			}()
 		}
 	}()
@@ -89,14 +89,14 @@ func (a *agent) Watch() <-chan []postValue {
 	return ch
 }
 
-func (a *agent) collectValues() []postValue {
+func (s *Swimmy) collectValues() []postValue {
 	result := []postValue{}
 
-	resultChan := make(chan postValue, a.procs)
+	resultChan := make(chan postValue, s.procs)
 
 	go func() {
 		var wg sync.WaitGroup
-		for _, co := range a.collectors() {
+		for _, co := range s.collectors() {
 			wg.Add(1)
 			go func(co *collector) {
 				defer wg.Done()

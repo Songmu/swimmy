@@ -7,9 +7,8 @@ import (
 )
 
 func TestCollectors(t *testing.T) {
-	a := NewAgent("./test", 5)
-
-	collectors := a.collectors()
+	s := NewSwimmy("./test", 5)
+	collectors := s.collectors()
 
 	var co *collector
 	for _, c := range collectors {
@@ -27,8 +26,8 @@ func TestCollectors(t *testing.T) {
 }
 
 func TestAgentCollectValues(t *testing.T) {
-	a := NewAgent("./test", 3)
-	v := a.collectValues()
+	s := NewSwimmy("./test", 3)
+	v := s.collectValues()
 
 	fmt.Printf("%+v\n", v)
 	if v[0].service != "test1" {
