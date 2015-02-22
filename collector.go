@@ -95,7 +95,7 @@ func (c *collector) gatherExecutable() <-chan string {
 }
 
 func (c *collector) collectFromCmd(cmd string) (map[string]float64, error) {
-	log.Printf("Executing: command = \"%s\"", cmd)
+	// log.Printf("Executing: command = \"%s\"", cmd)
 
 	// os.Setenv(pluginConfigurationEnvName, "")
 	stdout, stderr, err := runCommand(cmd)

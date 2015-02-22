@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 )
 
 type agent struct {
@@ -57,4 +59,61 @@ func (a *agent) collectors() []*collector {
 		collectors = append(collectors, c)
 	}
 	return collectors
+}
+
+type postValue struct {
+	service string
+	values  []metricValue
+}
+
+func (a *agent) Watch() <-chan []postValue {
+	ch := make(chan []postValue)
+	timer := make(chan time.Time)
+
+	go func() {
+		next := time.Now()
+		for {
+			timer <- <-time.After(next.Sub(time.Now()))
+			next = next.Add(time.Duration(a.interval) * time.Minute)
+		}
+	}()
+
+	go func() {
+		for _ = range timer {
+			go func() {
+				ch <- a.collectValues()
+			}()
+		}
+	}()
+
+	return ch
+}
+
+func (a *agent) collectValues() []postValue {
+	result := []postValue{}
+
+	resultChan := make(chan postValue, a.procs)
+
+	go func() {
+		var wg sync.WaitGroup
+		for _, co := range a.collectors() {
+			wg.Add(1)
+			go func(co *collector) {
+				defer wg.Done()
+
+				resultChan <- postValue{
+					values:  co.collectValues(),
+					service: co.ServiceName(),
+				}
+			}(co)
+		}
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	for p := range resultChan {
+		result = append(result, p)
+	}
+
+	return result
 }
