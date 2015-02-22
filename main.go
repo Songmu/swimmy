@@ -7,9 +7,9 @@ func main() {
 		Dir:      "./test",
 		Procs:    1,
 		Interval: 1,
-		ApiKey:   os.Getenv("MACKEREL_API_KEY"),
-		ApiBase:  "https://mackerel.io",
-		Debug:    true,
+		APIKey:   os.Getenv("MACKEREL_API_KEY"),
+		APIBase:  "https://mackerel.io",
+		Debug:    false,
 	})
 	s.Run()
 }

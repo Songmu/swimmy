@@ -15,8 +15,8 @@ type Args struct {
 	Dir      string
 	Procs    uint
 	Interval uint
-	ApiKey   string
-	ApiBase  string
+	APIKey   string
+	APIBase  string
 	Debug    bool
 }
 
@@ -45,10 +45,17 @@ func NewSwimmy(args Args) *Swimmy {
 		os.Exit(1)
 	}
 
+	api, err := newAPI(args.APIBase, args.APIKey, args.Debug)
+	if err != nil {
+		log.Printf("create api object failed : [%s]. %s\n", args.APIKey, args.APIBase)
+		os.Exit(1)
+	}
+
 	return &Swimmy{
 		dir:      absDir,
 		interval: interval,
 		procs:    1,
+		api:      api,
 	}
 }
 
