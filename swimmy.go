@@ -79,7 +79,7 @@ func newSwimmy(ags args) *swimmy {
 
 const postMetricsRetryMax = 60
 
-func (s *swimmy) run() {
+func (s *swimmy) swim() {
 	pvChan := s.watch()
 	for {
 		v := <-pvChan

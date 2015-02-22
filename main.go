@@ -11,5 +11,5 @@ func main() {
 		apiBase:  "https://mackerel.io",
 		// debug:    false,
 	})
-	s.run()
+	s.swim()
 }
