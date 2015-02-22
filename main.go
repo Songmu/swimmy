@@ -3,13 +3,13 @@ package main
 import "os"
 
 func main() {
-	s := NewSwimmy(Args{
-		Dir:      "./test",
-		Procs:    1,
-		Interval: 1,
-		APIKey:   os.Getenv("MACKEREL_API_KEY"),
-		APIBase:  "https://mackerel.io",
-		Debug:    false,
+	s := newSwimmy(args{
+		dir:      "./test",
+		procs:    1,
+		interval: 1,
+		apiKey:   os.Getenv("MACKEREL_API_KEY"),
+		apiBase:  "https://mackerel.io",
+		// debug:    false,
 	})
-	s.Run()
+	s.run()
 }

@@ -11,47 +11,47 @@ import (
 	"time"
 )
 
-type Args struct {
-	Dir      string
-	Procs    uint
-	Interval uint
-	APIKey   string
-	APIBase  string
-	Debug    bool
+type args struct {
+	dir      string
+	procs    uint
+	interval uint
+	apiKey   string
+	apiBase  string
+	debug    bool
 }
 
-type Swimmy struct {
+type swimmy struct {
 	dir      string
 	procs    uint
 	interval uint
 	api      *api
 }
 
-func NewSwimmy(args Args) *Swimmy {
-	interval := args.Interval
+func newSwimmy(ags args) *swimmy {
+	interval := ags.interval
 	if interval == 0 {
 		interval = 1
 	}
 
-	absDir, err := filepath.Abs(args.Dir)
+	absDir, err := filepath.Abs(ags.dir)
 	if err != nil {
-		log.Printf("Failed to create agent of dir:[%s] \"%s\"", args.Dir, err)
+		log.Printf("Failed to create agent of dir:[%s] \"%s\"", ags.dir, err)
 		os.Exit(1)
 	}
 
 	_, err = ioutil.ReadDir(absDir)
 	if err != nil {
-		log.Printf("Can't read Directory : [%s]. %s\n", args.Dir, err)
+		log.Printf("Can't read Directory : [%s]. %s\n", ags.dir, err)
 		os.Exit(1)
 	}
 
-	api, err := newAPI(args.APIBase, args.APIKey, args.Debug)
+	api, err := newAPI(ags.apiBase, ags.apiKey, ags.debug)
 	if err != nil {
-		log.Printf("create api object failed : [%s]. %s\n", args.APIKey, args.APIBase)
+		log.Printf("create api object failed : [%s]. %s\n", ags.apiKey, ags.apiBase)
 		os.Exit(1)
 	}
 
-	return &Swimmy{
+	return &swimmy{
 		dir:      absDir,
 		interval: interval,
 		procs:    1,
@@ -61,7 +61,7 @@ func NewSwimmy(args Args) *Swimmy {
 
 const postMetricsRetryMax = 60
 
-func (s *Swimmy) Run() {
+func (s *swimmy) run() {
 	pvChan := s.watch()
 	for {
 		v := <-pvChan
@@ -82,7 +82,7 @@ func (s *Swimmy) Run() {
 	}
 }
 
-func (s *Swimmy) collectors() []*collector {
+func (s *swimmy) collectors() []*collector {
 	collectors := []*collector{}
 
 	fileInformations, err := ioutil.ReadDir(s.dir)
@@ -109,7 +109,7 @@ type postValue struct {
 	retryCnt uint
 }
 
-func (s *Swimmy) watch() chan *postValue {
+func (s *swimmy) watch() chan *postValue {
 	ch := make(chan *postValue)
 	timer := make(chan time.Time)
 
@@ -135,7 +135,7 @@ func (s *Swimmy) watch() chan *postValue {
 	return ch
 }
 
-func (s *Swimmy) collectValues() []*postValue {
+func (s *swimmy) collectValues() []*postValue {
 	result := []*postValue{}
 
 	resultChan := make(chan *postValue, s.procs)

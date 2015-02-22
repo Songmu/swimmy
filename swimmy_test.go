@@ -6,9 +6,9 @@ import (
 )
 
 func TestCollectors(t *testing.T) {
-	s := NewSwimmy(Args{
-		Dir:      "./test",
-		Interval: 5,
+	s := newSwimmy(args{
+		dir:      "./test",
+		interval: 5,
 	})
 	collectors := s.collectors()
 
@@ -28,9 +28,9 @@ func TestCollectors(t *testing.T) {
 }
 
 func TestAgentCollectValues(t *testing.T) {
-	s := NewSwimmy(Args{
-		Dir:      "./test",
-		Interval: 3,
+	s := newSwimmy(args{
+		dir:      "./test",
+		interval: 3,
 	})
 	v := s.collectValues()
 
