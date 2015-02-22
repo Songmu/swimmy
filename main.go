@@ -3,6 +3,7 @@ package main
 import "os"
 
 func main() {
+	// TODO
 	s := newSwimmy(args{
 		dir:      "./test",
 		procs:    1,
