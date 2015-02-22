@@ -1,4 +1,4 @@
-package swimmy
+package main
 
 import (
 	"encoding/json"
@@ -11,27 +11,37 @@ import (
 	"time"
 )
 
+type Args struct {
+	Dir      string
+	Procs    uint
+	Interval uint
+	ApiKey   string
+	ApiBase  string
+	Debug    bool
+}
+
 type Swimmy struct {
 	dir      string
-	procs    int
+	procs    uint
 	interval uint
 	api      *api
 }
 
-func NewSwimmy(dir string, interval uint) *Swimmy {
+func NewSwimmy(args Args) *Swimmy {
+	interval := args.Interval
 	if interval == 0 {
 		interval = 1
 	}
 
-	absDir, err := filepath.Abs(dir)
+	absDir, err := filepath.Abs(args.Dir)
 	if err != nil {
-		log.Printf("Failed to create agent of dir:[%s] \"%s\"", dir, err)
+		log.Printf("Failed to create agent of dir:[%s] \"%s\"", args.Dir, err)
 		os.Exit(1)
 	}
 
 	_, err = ioutil.ReadDir(absDir)
 	if err != nil {
-		log.Printf("Can't read Directory : [%s]. %s\n", dir, err)
+		log.Printf("Can't read Directory : [%s]. %s\n", args.Dir, err)
 		os.Exit(1)
 	}
 
@@ -55,12 +65,8 @@ func (s *Swimmy) Run() {
 				// It is difficult to distinguish the error is server error or data error.
 				// So, if retryCnt exceeded the configured limit, postValue is considered invalid and abandoned.
 				if v.retryCnt > postMetricsRetryMax {
-					json, err := json.Marshal(v.values)
-					if err != nil {
-						log.Printf("Something wrong with post values. marshaling failed.")
-					} else {
-						log.Printf("Post values may be invalid and abandoned: %s => %s", v.service, string(json))
-					}
+					json, _ := json.Marshal(v.values)
+					log.Printf("Post values may be invalid and abandoned: %s => %s", v.service, string(json))
 					return
 				}
 				pvChan <- v

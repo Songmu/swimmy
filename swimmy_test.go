@@ -1,4 +1,4 @@
-package swimmy
+package main
 
 import (
 	"regexp"
@@ -6,7 +6,10 @@ import (
 )
 
 func TestCollectors(t *testing.T) {
-	s := NewSwimmy("./test", 5)
+	s := NewSwimmy(Args{
+		Dir:      "./test",
+		Interval: 5,
+	})
 	collectors := s.collectors()
 
 	var co *collector
@@ -25,7 +28,10 @@ func TestCollectors(t *testing.T) {
 }
 
 func TestAgentCollectValues(t *testing.T) {
-	s := NewSwimmy("./test", 3)
+	s := NewSwimmy(Args{
+		Dir:      "./test",
+		Interval: 3,
+	})
 	v := s.collectValues()
 
 	if v[0].service != "test1" {

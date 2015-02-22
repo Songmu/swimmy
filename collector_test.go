@@ -1,4 +1,4 @@
-package swimmy
+package main
 
 import (
 	"encoding/json"
