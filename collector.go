@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type metricValue struct {
@@ -48,7 +49,7 @@ func (c *collector) collectValues() []metricValue {
 				defer wg.Done()
 				v, err := c.collectFromCmd(path)
 				if err != nil {
-					log.Printf("error")
+					log.Warn("error")
 					return
 				}
 				resultChan <- v
@@ -95,19 +96,29 @@ func (c *collector) gatherExecutable() <-chan string {
 }
 
 func (c *collector) collectFromCmd(cmd string) (map[string]float64, error) {
-	// log.Printf("Executing: command = \"%s\"", cmd)
+	log.WithFields(logrus.Fields{
+		"cmd": cmd,
+	}).Debug("Executing command")
 
 	// os.Setenv(pluginConfigurationEnvName, "")
 	stdout, stderr, err := runCommand(cmd)
 
 	if err != nil {
-		log.Printf("Failed to execute command \"%s\" (skip these metrics):\n%s", cmd, stderr)
+		log.WithFields(logrus.Fields{
+			"cmd":    cmd,
+			"err":    err,
+			"stdout": stdout,
+			"stderr": stderr,
+		}).Warn("Failed to execute command (skip these metrics)")
 		return nil, err
 	}
 
 	rel, err := filepath.Rel(c.dir, cmd)
 	if err != nil {
-		log.Printf("Failed to resolve relative path \"%s\" (skip these metrics):\n%s", cmd, stderr)
+		log.WithFields(logrus.Fields{
+			"cmd": cmd,
+			"err": err,
+		}).Warn("Failed to resolve relative path")
 		return nil, err
 	}
 	baseKey := strings.Replace(rel, string(filepath.Separator), ".", -1)
@@ -133,7 +144,10 @@ func (c *collector) collectFromCmd(cmd string) (map[string]float64, error) {
 
 		v, err := strconv.ParseFloat(items[vIdx], 64)
 		if err != nil {
-			log.Printf("Failed to parse values: %s", err)
+			log.WithFields(logrus.Fields{
+				"err":   err,
+				"value": items[vIdx],
+			}).Warn("Failed to parse value.")
 			continue
 		}
 		results[k] = v

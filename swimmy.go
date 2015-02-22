@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 type args struct {
 	dir      string
@@ -35,19 +38,28 @@ func newSwimmy(ags args) *swimmy {
 
 	absDir, err := filepath.Abs(ags.dir)
 	if err != nil {
-		log.Printf("Failed to create agent of dir:[%s] \"%s\"", ags.dir, err)
+		log.WithFields(logrus.Fields{
+			"dir": ags.dir,
+			"err": err,
+		}).Error("Failed to create agent")
 		os.Exit(1)
 	}
 
 	_, err = ioutil.ReadDir(absDir)
 	if err != nil {
-		log.Printf("Can't read Directory : [%s]. %s\n", ags.dir, err)
+		log.WithFields(logrus.Fields{
+			"dir": ags.dir,
+			"err": err,
+		}).Error("Can't read Directory")
 		os.Exit(1)
 	}
 
 	api, err := newAPI(ags.apiBase, ags.apiKey, ags.debug)
 	if err != nil {
-		log.Printf("create api object failed : [%s]. %s\n", ags.apiKey, ags.apiBase)
+		log.WithFields(logrus.Fields{
+			"apiKey":  ags.apiKey,
+			"apiBase": ags.apiBase,
+		}).Error("Failed creating api object")
 		os.Exit(1)
 	}
 
@@ -73,7 +85,10 @@ func (s *swimmy) run() {
 				// So, if retryCnt exceeded the configured limit, postValue is considered invalid and abandoned.
 				if v.retryCnt > postMetricsRetryMax {
 					json, _ := json.Marshal(v.values)
-					log.Printf("Post values may be invalid and abandoned: %s => %s", v.service, string(json))
+					log.WithFields(logrus.Fields{
+						"service": v.service,
+						"json":    string(json),
+					}).Warn("Post values may be invalid and abandoned.")
 					return
 				}
 				pvChan <- v

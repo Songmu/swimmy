@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type api struct {
@@ -29,7 +30,10 @@ var apiRequestTimeout = 30 * time.Second
 
 func (ap *api) do(method, url string, body []byte) (resp *http.Response, err error) {
 	if ap.debug {
-		log.Printf("[DEBUG] url:%s, body:%s", url, string(body))
+		log.WithFields(logrus.Fields{
+			"url":  url,
+			"body": string(body),
+		}).Debug("[DEBUG] dry-run")
 		return nil, nil
 	}
 
