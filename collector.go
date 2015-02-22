@@ -13,20 +13,38 @@ import (
 )
 
 type metricValue struct {
-	time  int64
-	name  string
-	value float64
+	Time  int64   `json:"time"`
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
 }
 
 type collector struct {
-	dir string
+	dir   string
+	procs int
+}
+
+func newCollector(dir string) (*collector, error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		log.Printf("Failed to create collector \"%s\"", dir)
+		return nil, err
+	}
+
+	return &collector{
+		dir:   absDir,
+		procs: 1,
+	}, nil
+}
+
+func (c *collector) ServiceName() string {
+	return filepath.Base(c.dir)
 }
 
 func (c *collector) collectValues() ([]metricValue, error) {
 	var result []metricValue
 
 	ch := c.gatherExecutable()
-	resultChan := make(chan map[string]float64)
+	resultChan := make(chan map[string]float64, c.procs)
 	go func() {
 		var wg sync.WaitGroup
 		for path := range ch {
@@ -49,9 +67,9 @@ func (c *collector) collectValues() ([]metricValue, error) {
 	for r := range resultChan {
 		for k, v := range r {
 			result = append(result, metricValue{
-				time:  time,
-				name:  k,
-				value: v,
+				Time:  time,
+				Name:  k,
+				Value: v,
 			})
 		}
 	}
@@ -59,7 +77,7 @@ func (c *collector) collectValues() ([]metricValue, error) {
 }
 
 func (c *collector) gatherExecutable() <-chan string {
-	ch := make(chan string)
+	ch := make(chan string, c.procs)
 
 	go func() {
 		filepath.Walk(c.dir, func(path string, info os.FileInfo, err error) error {
@@ -79,18 +97,6 @@ func (c *collector) gatherExecutable() <-chan string {
 	}()
 
 	return ch
-}
-
-func newCollector(dir string) (*collector, error) {
-	absDir, err := filepath.Abs(dir)
-	if err != nil {
-		log.Printf("Failed to create collector \"%s\"", dir)
-		return nil, err
-	}
-
-	return &collector{
-		dir: absDir,
-	}, nil
 }
 
 func (c *collector) collectFromCmd(cmd string) (map[string]float64, error) {
