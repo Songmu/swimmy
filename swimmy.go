@@ -89,7 +89,10 @@ const (
 	loopStateTerminating
 )
 
-const postMetricsRetryMax = 60
+const (
+	postMetricsBufferSize = 6 * 60
+	postMetricsRetryMax   = 60
+)
 
 func (s *swimmy) swim() {
 	pvChan := s.watch()
@@ -173,7 +176,7 @@ type postValue struct {
 }
 
 func (s *swimmy) watch() chan *postValue {
-	ch := make(chan *postValue)
+	ch := make(chan *postValue, postMetricsBufferSize)
 	timer := make(chan time.Time)
 
 	go func() {
