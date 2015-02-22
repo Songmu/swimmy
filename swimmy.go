@@ -62,12 +62,13 @@ func (s *Swimmy) collectors() []*collector {
 }
 
 type postValue struct {
-	service string
-	values  []metricValue
+	service  string
+	values   []metricValue
+	retryCnt uint
 }
 
-func (s *Swimmy) watch() <-chan []postValue {
-	ch := make(chan []postValue)
+func (s *Swimmy) watch() chan *postValue {
+	ch := make(chan *postValue)
 	timer := make(chan time.Time)
 
 	go func() {
@@ -81,7 +82,10 @@ func (s *Swimmy) watch() <-chan []postValue {
 	go func() {
 		for _ = range timer {
 			go func() {
-				ch <- s.collectValues()
+				values := s.collectValues()
+				for _, v := range values {
+					ch <- v
+				}
 			}()
 		}
 	}()
@@ -89,10 +93,10 @@ func (s *Swimmy) watch() <-chan []postValue {
 	return ch
 }
 
-func (s *Swimmy) collectValues() []postValue {
-	result := []postValue{}
+func (s *Swimmy) collectValues() []*postValue {
+	result := []*postValue{}
 
-	resultChan := make(chan postValue, s.procs)
+	resultChan := make(chan *postValue, s.procs)
 
 	go func() {
 		var wg sync.WaitGroup
@@ -101,9 +105,10 @@ func (s *Swimmy) collectValues() []postValue {
 			go func(co *collector) {
 				defer wg.Done()
 
-				resultChan <- postValue{
-					values:  co.collectValues(),
-					service: co.ServiceName(),
+				resultChan <- &postValue{
+					values:   co.collectValues(),
+					service:  co.ServiceName(),
+					retryCnt: 0,
 				}
 			}(co)
 		}
