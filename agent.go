@@ -53,7 +53,7 @@ func (a *agent) collectors() []*collector {
 			continue
 		}
 
-		c, _ := newCollector(filepath.Join(a.dir, name))
+		c := newCollector(filepath.Join(a.dir, name))
 		collectors = append(collectors, c)
 	}
 	return collectors

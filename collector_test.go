@@ -9,7 +9,8 @@ import (
 
 func TestCollectFromCmd(t *testing.T) {
 
-	c, _ := newCollector("./test/test1")
+	dir, _ := filepath.Abs("./test/test1")
+	c := newCollector(dir)
 
 	if c.ServiceName() != "test1" {
 		t.Errorf("ServiceName should be equals directory name")
@@ -27,8 +28,8 @@ func TestCollectFromCmd(t *testing.T) {
 }
 
 func TestCollectValues(t *testing.T) {
-	c, _ := newCollector("./test/test1")
-	v, _ := c.collectValues()
+	c := newCollector("./test/test1")
+	v := c.collectValues()
 
 	r := make(map[string]float64)
 	for _, mv := range v {

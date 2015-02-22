@@ -23,24 +23,19 @@ type collector struct {
 	procs int
 }
 
-func newCollector(dir string) (*collector, error) {
-	absDir, err := filepath.Abs(dir)
-	if err != nil {
-		log.Printf("Failed to create collector \"%s\"", dir)
-		return nil, err
-	}
-
+func newCollector(dir string) *collector {
+	// dir must be absolute path
 	return &collector{
-		dir:   absDir,
+		dir:   dir,
 		procs: 1,
-	}, nil
+	}
 }
 
 func (c *collector) ServiceName() string {
 	return filepath.Base(c.dir)
 }
 
-func (c *collector) collectValues() ([]metricValue, error) {
+func (c *collector) collectValues() []metricValue {
 	var result []metricValue
 
 	ch := c.gatherExecutable()
@@ -73,7 +68,7 @@ func (c *collector) collectValues() ([]metricValue, error) {
 			})
 		}
 	}
-	return result, nil
+	return result
 }
 
 func (c *collector) gatherExecutable() <-chan string {
