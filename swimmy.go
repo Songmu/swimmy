@@ -40,6 +40,16 @@ func NewSwimmy(dir string, interval uint) *Swimmy {
 	}
 }
 
+func (s *Swimmy) Run() {
+
+	pvChan := s.watch()
+
+	for {
+		v := <-pvChan
+		fmt.Print(v)
+	}
+}
+
 func (s *Swimmy) collectors() []*collector {
 	collectors := []*collector{}
 
