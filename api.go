@@ -33,7 +33,7 @@ func (ap *api) do(method, url string, body []byte) (resp *http.Response, err err
 		log.WithFields(logrus.Fields{
 			"url":  url,
 			"body": string(body),
-		}).Debug("[DEBUG] dry-run")
+		}).Debug("Debug mode. skip to post.")
 		return nil, nil
 	}
 
@@ -79,6 +79,11 @@ func (ap *api) postServiceMetrics(service string, values []metricValue) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("API result failed: %s", resp.Status)
 	}
+
+	log.WithFields(logrus.Fields{
+		"service": service,
+		"json":    string(requestJSON),
+	}).Debug("Sucess posting metrics")
 	return nil
 }
 

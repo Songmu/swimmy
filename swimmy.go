@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cenkalti/backoff"
 )
 
 var log = func() *logrus.Logger {
@@ -77,14 +78,45 @@ func newSwimmy(ags args) *swimmy {
 	}
 }
 
+type loopState uint8
+
+const (
+	_ loopState = iota
+	loopStateDefault
+	loopStateQueued
+	loopStateError
+	loopStateRecovery
+	loopStateTerminating
+)
+
 const postMetricsRetryMax = 60
 
 func (s *swimmy) swim() {
 	pvChan := s.watch()
+
+	b := backoff.NewExponentialBackOff()
+	lState := loopStateDefault
 	for {
 		v := <-pvChan
+
+		nextDelay := time.Duration(0)
+		switch lState {
+		case loopStateDefault:
+			// nop
+		case loopStateQueued:
+			nextDelay = time.Duration(1)
+		case loopStateError:
+			nextDelay = b.NextBackOff()
+		case loopStateRecovery:
+			nextDelay = time.Duration(10)
+		}
+
+		time.Sleep(nextDelay)
 		err := s.api.postServiceMetrics(v.service, v.values)
 		if err != nil {
+			lState = loopStateError
+			log.WithFields(logrus.Fields{"err": err}).Warn("request failed")
+
 			go func() {
 				v.retryCnt++
 				// It is difficult to distinguish the error is server error or data error.
@@ -99,6 +131,16 @@ func (s *swimmy) swim() {
 				}
 				pvChan <- v
 			}()
+			continue
+		}
+
+		if len(pvChan) == 0 {
+			b.Reset()
+			lState = loopStateDefault
+		} else if lState == loopStateError {
+			lState = loopStateRecovery
+		} else if lState != loopStateRecovery {
+			lState = loopStateQueued
 		}
 	}
 }
