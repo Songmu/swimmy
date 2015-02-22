@@ -12,7 +12,13 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var log = logrus.New()
+var log = func() *logrus.Logger {
+	l := logrus.New()
+	if os.Getenv("SWIMMY_DEBUG") != "" {
+		l.Level = logrus.DebugLevel
+	}
+	return l
+}()
 
 type args struct {
 	dir      string
