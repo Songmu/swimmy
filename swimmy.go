@@ -162,10 +162,13 @@ func (s *swimmy) collectValues() []*postValue {
 			go func(co *collector) {
 				defer wg.Done()
 
-				resultChan <- &postValue{
-					values:   co.collectValues(),
-					service:  co.ServiceName(),
-					retryCnt: 0,
+				values := co.collectValues()
+				if len(values) > 0 {
+					resultChan <- &postValue{
+						values:   values,
+						service:  co.ServiceName(),
+						retryCnt: 0,
+					}
 				}
 			}(co)
 		}
