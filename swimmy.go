@@ -1,6 +1,7 @@
 package swimmy
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,7 @@ type Swimmy struct {
 	dir      string
 	procs    int
 	interval uint
+	api      *api
 }
 
 func NewSwimmy(dir string, interval uint) *Swimmy {
@@ -40,13 +42,30 @@ func NewSwimmy(dir string, interval uint) *Swimmy {
 	}
 }
 
+const postMetricsRetryMax = 60
+
 func (s *Swimmy) Run() {
-
 	pvChan := s.watch()
-
 	for {
 		v := <-pvChan
-		fmt.Print(v)
+		err := s.api.postServiceMetrics(v.service, v.values)
+		if err != nil {
+			go func() {
+				v.retryCnt++
+				// It is difficult to distinguish the error is server error or data error.
+				// So, if retryCnt exceeded the configured limit, postValue is considered invalid and abandoned.
+				if v.retryCnt > postMetricsRetryMax {
+					json, err := json.Marshal(v.values)
+					if err != nil {
+						log.Printf("Something wrong with post values. marshaling failed.")
+					} else {
+						log.Printf("Post values may be invalid and abandoned: %s => %s", v.service, string(json))
+					}
+					return
+				}
+				pvChan <- v
+			}()
+		}
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -26,7 +27,18 @@ func newAPI(rawURL, apiKey string, debug bool) (*api, error) {
 
 var apiRequestTimeout = 30 * time.Second
 
-func (ap *api) do(req *http.Request) (resp *http.Response, err error) {
+func (ap *api) do(method, url string, body []byte) (resp *http.Response, err error) {
+	if ap.debug {
+		log.Printf("[DEBUG] url:%s, body:%s", url, string(body))
+		return nil, nil
+	}
+
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Api-Key", ap.apiKey)
 	req.Header.Set("User-Agent", "mackerel-swimmy")
 
@@ -45,17 +57,12 @@ func (ap *api) postServiceMetrics(service string, values []metricValue) error {
 		return err
 	}
 
-	req, err := http.NewRequest(
-		"POST",
-		ap.urlFor(fmt.Sprintf("/api/v0/services/%s/tsdb", service)).String(),
-		bytes.NewReader(requestJSON),
+	resp, err := ap.do("POST",
+		ap.urlFor(fmt.Sprintf("/api/v0/services/%s/tsdb", service)),
+		requestJSON,
 	)
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := ap.do(req)
-	if err != nil {
+
+	if err != nil || ap.debug {
 		return err
 	}
 
@@ -71,11 +78,8 @@ func (ap *api) postServiceMetrics(service string, values []metricValue) error {
 	return nil
 }
 
-func (ap *api) urlFor(path string) *url.URL {
-	newURL, err := url.Parse(ap.baseURL.String())
-	if err != nil {
-		panic("invalid url passed")
-	}
+func (ap *api) urlFor(path string) string {
+	newURL, _ := url.Parse(ap.baseURL.String())
 	newURL.Path = path
-	return newURL
+	return newURL.String()
 }

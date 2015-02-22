@@ -1,7 +1,6 @@
 package swimmy
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 )
@@ -29,7 +28,6 @@ func TestAgentCollectValues(t *testing.T) {
 	s := NewSwimmy("./test", 3)
 	v := s.collectValues()
 
-	fmt.Printf("%+v\n", v)
 	if v[0].service != "test1" {
 		t.Errorf("something wrong")
 	}
