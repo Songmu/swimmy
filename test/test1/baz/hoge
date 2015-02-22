@@ -1,0 +1,4 @@
+#!/bin/sh
+echo 33
+echo "dummy"
+echo "dummy\t15"

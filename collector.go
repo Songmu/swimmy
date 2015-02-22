@@ -49,7 +49,7 @@ func (c *collector) collectValues() ([]metricValue, error) {
 		var wg sync.WaitGroup
 		for path := range ch {
 			wg.Add(1)
-			go func() {
+			go func(path string) {
 				defer wg.Done()
 				v, err := c.collectFromCmd(path)
 				if err != nil {
@@ -57,7 +57,7 @@ func (c *collector) collectValues() ([]metricValue, error) {
 					return
 				}
 				resultChan <- v
-			}()
+			}(path)
 		}
 		wg.Wait()
 		close(resultChan)
@@ -117,7 +117,7 @@ func (c *collector) collectFromCmd(cmd string) (map[string]float64, error) {
 	}
 	baseKey := strings.Replace(rel, string(filepath.Separator), ".", -1)
 
-	results := make(map[string]float64, 0)
+	results := make(map[string]float64)
 	for _, line := range strings.Split(stdout, "\n") {
 		if line == "" {
 			continue
