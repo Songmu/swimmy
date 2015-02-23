@@ -28,12 +28,8 @@ func newCollector(dir string) *collector {
 	// dir must be absolute path
 	return &collector{
 		dir:   dir,
-		procs: 1,
+		procs: 2,
 	}
-}
-
-func (c *collector) ServiceName() string {
-	return filepath.Base(c.dir)
 }
 
 func (c *collector) collectValues() []metricValue {

@@ -12,13 +12,7 @@ func TestCollectors(t *testing.T) {
 	})
 	collectors := s.collectors()
 
-	var co *collector
-	for _, c := range collectors {
-		if c.ServiceName() == "test1" {
-			co = c
-			break
-		}
-	}
+	co := collectors[0]
 
 	re, _ := regexp.Compile("/test/test1$")
 	if !re.MatchString(co.dir) {
@@ -29,12 +23,13 @@ func TestCollectors(t *testing.T) {
 
 func TestAgentCollectValues(t *testing.T) {
 	s := newSwimmy(args{
+		service:  "hoge",
 		dir:      "./test",
 		interval: 3,
 	})
 	v := s.collectValues()
 
-	if v[0].service != "test1" {
+	if v[0].service != "hoge" {
 		t.Errorf("something wrong")
 	}
 

@@ -22,6 +22,7 @@ var log = func() *logrus.Logger {
 }()
 
 type args struct {
+	service  string
 	dir      string
 	procs    uint
 	interval uint
@@ -32,6 +33,7 @@ type args struct {
 
 type swimmy struct {
 	dir      string
+	service  string
 	procs    uint
 	interval uint
 	api      *api
@@ -71,6 +73,7 @@ func newSwimmy(ags args) *swimmy {
 	}
 
 	return &swimmy{
+		service:  ags.service,
 		dir:      absDir,
 		interval: interval,
 		procs:    1,
@@ -217,7 +220,7 @@ func (s *swimmy) collectValues() []*postValue {
 				if len(values) > 0 {
 					resultChan <- &postValue{
 						values:   values,
-						service:  co.ServiceName(),
+						service:  s.service,
 						retryCnt: 0,
 					}
 				}

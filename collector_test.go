@@ -12,9 +12,6 @@ func TestCollectFromCmd(t *testing.T) {
 	dir, _ := filepath.Abs("./test/test1")
 	c := newCollector(dir)
 
-	if c.ServiceName() != "test1" {
-		t.Errorf("ServiceName should be equals directory name")
-	}
 	cmd, _ := filepath.Abs("./test/test1/foo")
 	r, _ := c.collectFromCmd(cmd)
 

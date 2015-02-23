@@ -5,6 +5,7 @@ import "os"
 func main() {
 	// TODO
 	s := newSwimmy(args{
+		service:  "test1",
 		dir:      "./test",
 		procs:    1,
 		interval: 1,
